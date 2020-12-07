@@ -41,11 +41,10 @@ func TestStore_SyncDiskKeyStoreToDB_HappyPath(t *testing.T) {
 	defer cleanup()
 	require.NoError(t, app.Start())
 	store := app.GetStore()
+	pwd := cltest.Password
+	require.NoError(t, store.KeyStore.Unlock(pwd))
 
 	// create key on disk
-	pwd := "p@ssword"
-	err := store.KeyStore.Unlock(pwd)
-	require.NoError(t, err)
 	acc, err := store.KeyStore.NewAccount()
 	require.NoError(t, err)
 
@@ -229,6 +228,9 @@ func TestKeyStore_Import(t *testing.T) {
 	store, cleanup := cltest.NewStore(t)
 	defer cleanup()
 
+	err := store.KeyStore.Unlock(cltest.Password)
+	require.NoError(t, err)
+
 	keys, err := store.AllKeys()
 	require.NoError(t, err)
 	require.Len(t, keys, 1)
@@ -250,6 +252,9 @@ func TestKeyStore_Import(t *testing.T) {
 func TestKeyStore_Export(t *testing.T) {
 	store, cleanup := cltest.NewStore(t)
 	defer cleanup()
+
+	err := store.KeyStore.Unlock(cltest.Password)
+	require.NoError(t, err)
 
 	keys, err := store.AllKeys()
 	require.NoError(t, err)

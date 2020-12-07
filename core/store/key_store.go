@@ -20,6 +20,8 @@ import (
 // For more information, see: https://github.com/ethereum/go-ethereum/issues/3731
 const EthereumMessageHashPrefix = "\x19Ethereum Signed Message:\n32"
 
+var ErrKeyStoreLocked = errors.New("keystore is locked (HINT: did you forget to call keystore.Unlock?)")
+
 //go:generate mockery --name KeyStoreInterface --output ../internal/mocks/ --case=underscore
 type KeyStoreInterface interface {
 	Unlock(password string) error
@@ -80,6 +82,9 @@ func (ks *KeyStore) Unlock(password string) error {
 
 // NewAccount adds an account to the keystore
 func (ks *KeyStore) NewAccount() (accounts.Account, error) {
+	if ks.password == "" {
+		return accounts.Account{}, ErrKeyStoreLocked
+	}
 	return ks.KeyStore.NewAccount(ks.password)
 }
 
@@ -113,6 +118,9 @@ func (ks *KeyStore) GetAccountByAddress(address common.Address) (accounts.Accoun
 }
 
 func (ks *KeyStore) Import(keyJSON []byte, oldPassword string) (accounts.Account, error) {
+	if ks.password == "" {
+		return accounts.Account{}, ErrKeyStoreLocked
+	}
 	acct, err := ks.KeyStore.Import(keyJSON, oldPassword, ks.password)
 	if err != nil {
 		return accounts.Account{}, errors.Wrap(err, "could not import ETH key")
@@ -122,6 +130,9 @@ func (ks *KeyStore) Import(keyJSON []byte, oldPassword string) (accounts.Account
 }
 
 func (ks *KeyStore) Export(address common.Address, newPassword string) ([]byte, error) {
+	if ks.password == "" {
+		return nil, ErrKeyStoreLocked
+	}
 	acct, err := ks.GetAccountByAddress(address)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not export ETH key")
@@ -130,6 +141,9 @@ func (ks *KeyStore) Export(address common.Address, newPassword string) ([]byte, 
 }
 
 func (ks *KeyStore) Delete(address common.Address) error {
+	if ks.password == "" {
+		return ErrKeyStoreLocked
+	}
 	acct, err := ks.GetAccountByAddress(address)
 	if err != nil {
 		return errors.Wrap(err, "could not delete ETH key")

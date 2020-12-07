@@ -307,6 +307,7 @@ func TestValidateServiceAgreement(t *testing.T) {
 	t.Parallel()
 
 	store, cleanup := cltest.NewStore(t)
+	defer cleanup()
 	err := store.KeyStore.Unlock("password")
 	assert.NoError(t, err)
 	_, err = store.KeyStore.NewAccount() // matches correct_password.txt
